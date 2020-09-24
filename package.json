@@ -1,0 +1,25 @@
+{
+  "name": "elastisync",
+  "version": "1.0.0",
+  "description": "Universal service for syncing data from some database to elasticsearch",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/georgyfarniev/elastisync.git"
+  },
+  "keywords": [
+    "elasticsearch",
+    "mongodb",
+    "sync",
+    "service"
+  ],
+  "author": "Georgy Farniev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/georgyfarniev/elastisync/issues"
+  },
+  "homepage": "https://github.com/georgyfarniev/elastisync#readme"
+}
