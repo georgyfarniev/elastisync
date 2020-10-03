@@ -1,0 +1,2 @@
+rs.initiate()
+rs.slaveOk()

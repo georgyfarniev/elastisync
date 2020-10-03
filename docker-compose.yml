@@ -1,0 +1,54 @@
+version: '3.7'
+
+services:
+  # mongo:
+  #   image: 'mongo:4.2'
+  #   container_name: elastisync_mongo
+  #   command:
+  #     - "--replSet=rs0"
+  #   environment:
+  #     - MONGO_INITDB_DATABASE=elastisync
+  #   volumes:
+  #     - ./init.js:/docker-entrypoint-initdb.d/init.js:ro
+  #     - mongodb_elastisync_data:/data/db
+  #   ports:
+  #     - '27021:27017'
+
+  #     - '27019:27019'
+
+      # - '27017-27019:27017-27019'
+  mongo:
+    hostname: mongo
+    container_name: elastisync_mongo
+    image: 'mongo:4.2'
+    ports:
+      - 27021:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
+    container_name: elastisync_elasticsearch
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+
+volumes:
+  mongodb_elastisync_data:
+    driver: local
+  elastic_data:
+    driver: local
+
+
+
