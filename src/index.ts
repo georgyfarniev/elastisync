@@ -1,37 +1,7 @@
 import { MongoClient } from 'mongodb'
-import { EventEmitter } from 'events'
-import { MongoWatcher, EventTypes } from './mongo'
+import { MongoWatcher } from './mongo'
 import { ElasticInterface } from './elastic'
-import { ClientOptions } from '@elastic/elasticsearch'
-
-type UpsertDocument = any
-
-/**
- * Hooks facts:
- *  - they are functions used to shape data before passing it down to elasticsearch index
- *  - if hook returns null, nothing will be executed for elasticsearch index
- *  - can be async
- */
-
-// upsert hook must return either shaped data object or null
-export type UpsertHook = (document: UpsertDocument) => Promise<any|null>
-
-// remove hook may return undefinded and therefore will proceed, or null to prevent operation
-export type RemoveHook = (id: string) => Promise<void|null> | void| null
-
-interface ElastisyncOptions {
-  source: EventEmitter
-
-  elasticsearch: {
-    clientOptions: ClientOptions
-    index: string
-  }
-
-  hooks?: {
-    upsert?: UpsertHook
-    remove?: RemoveHook
-  }
-}
+import { DocInsert, DocUpdate, ElastisyncOptions, EventTypes } from './types'
 
 /**
  * Binds source data collection to elasticsearch index
@@ -42,22 +12,26 @@ function elastisync(options: ElastisyncOptions) {
 
   const { source } = options
 
-  source.on(EventTypes.Upsert, async (data) => {
-    const upsertHook = options?.hooks?.upsert
-    if (upsertHook && typeof upsertHook === 'function') {
-      const ret = await upsertHook(data);
-      if (ret !== null) dest.insert(ret)
-    } else {
-       dest.insert(data)
-     }
+  // Apply hook to data
+  const applyHook = async (event: EventTypes, data: DocInsert | DocUpdate | string) => {
+    const fn = options?.hooks?.[event] as any
+    if (fn && typeof fn === 'function') return fn(data)
+    return data
+  }
+
+  source.on(EventTypes.Insert, async (data) => {
+    const ret = await applyHook(EventTypes.Insert, data);
+    if (ret !== null) dest.insert(data)
+  })
+
+  source.on(EventTypes.Update, async (data) => {
+    const ret = await applyHook(EventTypes.Update, data);
+    if (ret !== null) dest.update(data)
   })
 
   source.on(EventTypes.Remove, async ({ id }) => {
-    const removeHook = options?.hooks?.remove
-    if (removeHook && typeof removeHook === 'function' && await removeHook(id) === null)
-      return
-
-    dest.remove(id)
+    const ret = await applyHook(EventTypes.Remove, id);
+    if (ret !== null) dest.remove(id)
   })
 }
 
@@ -90,6 +64,14 @@ async function main() {
       index: 'test',
       clientOptions: {
         node: 'http://localhost:9200'
+      }
+    },
+    hooks: {
+      insert(doc) {
+        return {
+          ...doc,
+          newField: 8888
+        }
       }
     }
   });
