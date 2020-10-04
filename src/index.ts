@@ -1,39 +1,18 @@
 import { MongoClient } from 'mongodb'
+import { elastisync } from './elastisync';
 import { MongoWatcher } from './mongo'
-import { ElasticInterface } from './elastic'
-import { DocInsert, DocUpdate, ElastisyncOptions, EventTypes } from './types'
 
 /**
- * Binds source data collection to elasticsearch index
- * @param options
+ * TODO:
+ * - single elasticsearch connection for multiple indexes binding
+ * - errors handling
+ * - examples
+ * - better event processing (resume token, etc)
+ * - graceful termination
+ * - exports
+ * - fields removing on update support
+ * - other sources (implement them as plugins)
  */
-function elastisync(options: ElastisyncOptions) {
-  const dest = new ElasticInterface(options.elasticsearch)
-
-  const { source } = options
-
-  // Apply hook to data
-  const applyHook = async (event: EventTypes, data: DocInsert | DocUpdate | string) => {
-    const fn = options?.hooks?.[event] as any
-    if (fn && typeof fn === 'function') return fn(data)
-    return data
-  }
-
-  source.on(EventTypes.Insert, async (data) => {
-    const ret = await applyHook(EventTypes.Insert, data);
-    if (ret !== null) dest.insert(data)
-  })
-
-  source.on(EventTypes.Update, async (data) => {
-    const ret = await applyHook(EventTypes.Update, data);
-    if (ret !== null) dest.update(data)
-  })
-
-  source.on(EventTypes.Remove, async ({ id }) => {
-    const ret = await applyHook(EventTypes.Remove, id);
-    if (ret !== null) dest.remove(id)
-  })
-}
 
 async function connectMongodb() {
   const client = await MongoClient.connect('mongodb://localhost:27021/elastisync', {
@@ -57,6 +36,7 @@ async function main() {
 
   watcher.on('insert', console.dir)
   watcher.on('replace', console.dir)
+  watcher.on('update', console.dir)
 
   elastisync({
     source: watcher,
@@ -75,8 +55,6 @@ async function main() {
       }
     }
   });
-
-  console.log('done');
 }
 
 if (require.main === module) {

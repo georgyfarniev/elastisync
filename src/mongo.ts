@@ -14,9 +14,7 @@ interface MongoWatcherOptions {
 export class MongoWatcher extends ElastisyncSourceBase {
   constructor(private readonly opts: MongoWatcherOptions) {
     super()
-
     const cs = this.opts.db.collection(this.opts.collection).watch(this.opts.pipeline);
-
     cs.on('change', this.handleChange)
   }
 
