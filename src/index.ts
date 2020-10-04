@@ -69,6 +69,13 @@ async function connectMongodb() {
 
   const db = client.db('elastisync');
 
+  console.log('db connected')
+  return db
+}
+
+async function main() {
+  const db = await connectMongodb();
+
   const watcher = new MongoWatcher({
     db,
     collection: 'test'
@@ -86,13 +93,6 @@ async function connectMongodb() {
       }
     }
   });
-
-  console.log('db connected')
-  return db
-}
-
-async function main() {
-  const db = await connectMongodb();
 
   console.log('done');
 }
