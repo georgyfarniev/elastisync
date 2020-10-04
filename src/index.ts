@@ -18,18 +18,13 @@ function elastisync(options: ElastisyncOptions) {
 
   const { source } = options
 
-  source.on(EventTypes.Insert, (data) => {
+  source.on(EventTypes.Upsert, (data) => {
     dest.insert(data)
   })
 
-  source.on(EventTypes.Replace, (data) => {
-    dest.insert(data)
+  source.on(EventTypes.Delete, ({ id }) => {
+    dest.remove(id)
   })
-
-  source.on(EventTypes.Update, ({ id, updated }) => {
-    dest.update(id, updated)
-  })
-
 }
 
 async function connectMongodb() {
