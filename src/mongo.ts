@@ -13,7 +13,7 @@ interface MongoWatcherOptions {
 
 export const enum EventTypes {
   Upsert = 'upsert',
-  Delete = 'delete',
+  Remove = 'remove',
 }
 
 export class MongoWatcher extends EventEmitter {
@@ -48,7 +48,7 @@ export class MongoWatcher extends EventEmitter {
 
   private handleDelete = (event: ChangeEventDelete) => {
     const id = (event.documentKey._id as any).toString()
-    this.emit(EventTypes.Delete, { id })
+    this.emit(EventTypes.Remove, { id })
   }
 
   private handleIgnoredEvent = (event: ChangeEvent) => {
