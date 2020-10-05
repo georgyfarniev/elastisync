@@ -19,6 +19,9 @@
     "sync",
     "service"
   ],
+  "files": [
+    "dist/*.js"
+  ],
   "author": "Georgy Farniev",
   "license": "MIT",
   "bugs": {
